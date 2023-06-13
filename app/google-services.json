@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "568117024642",
+    "project_id": "giftimap",
+    "storage_bucket": "giftimap.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:568117024642:android:8dbcd79d0efcc2b21ae19b",
+        "android_client_info": {
+          "package_name": "com.example.giftmap"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "568117024642-cb1qt1su71o3e05uts09egm4rj31oohq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAkUHbf58gQ5hRlp1kMiwTCl_Q6Qz1ey8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "568117024642-cb1qt1su71o3e05uts09egm4rj31oohq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
