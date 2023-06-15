@@ -14,13 +14,16 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import android.widget.ImageView
+import android.widget.ListAdapter
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 
-class ImageAdapter(private val items: ArrayList<String>) : RecyclerView.Adapter<ImageAdapter.ViewHolder>() {
+class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapter<ImageAdapter.ViewHolder>() {
 
     private var isMultiSelect = false
     private val selectedItems = mutableListOf<String>()
+    private var giftList = ArrayList<ItemData>()
 
     fun toggleMultiSelect() {
         isMultiSelect = !isMultiSelect
@@ -61,7 +64,7 @@ class ImageAdapter(private val items: ArrayList<String>) : RecyclerView.Adapter<
             })
 
             // 선택한 이미지 리스트에서 삭제
-            val index = items.indexOf(imageUrl)
+            val index = selectedItems.indexOf(imageUrl)
             items.removeAt(index)
         }
 
@@ -73,9 +76,17 @@ class ImageAdapter(private val items: ArrayList<String>) : RecyclerView.Adapter<
         notifyDataSetChanged()
     }
 
+    fun setListData(data: MutableList<ItemData>) {
+        giftList.clear()
+        giftList.addAll(data)
+        notifyDataSetChanged()
+    }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.img)
+        val store: TextView = itemView.findViewById(R.id.store)
+        val item: TextView = itemView.findViewById(R.id.item)
+        val date: TextView = itemView.findViewById(R.id.date)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -88,11 +99,16 @@ class ImageAdapter(private val items: ArrayList<String>) : RecyclerView.Adapter<
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val gift: ItemData = giftList[position]
+        holder.store.text = gift.store
+        holder.item.text = gift.item
+        holder.date.text = gift.date
+
         val imageUrl = items[position]
         Glide.with(holder.imageView.context).load(imageUrl).into(holder.imageView)
 
         if (isMultiSelect) {
-            val isSelected = selectedItems.contains(imageUrl)
+            val isSelected = selectedItems.contains(gift.imageUrl)
             holder.itemView.setBackgroundColor(
                 if (isSelected) {
                     ContextCompat.getColor(holder.itemView.context, R.color.selectpink)
@@ -103,9 +119,9 @@ class ImageAdapter(private val items: ArrayList<String>) : RecyclerView.Adapter<
 
             holder.itemView.setOnClickListener {
                 if (isSelected) {
-                    selectedItems.remove(imageUrl)
+                    selectedItems.remove(gift.imageUrl)
                 } else {
-                    selectedItems.add(imageUrl)
+                    selectedItems.add(gift.imageUrl)
                 }
                 notifyItemChanged(position)
             }
