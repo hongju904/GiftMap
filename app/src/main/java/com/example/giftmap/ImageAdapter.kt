@@ -1,5 +1,6 @@
 package com.example.giftmap
 
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.graphics.Color
 import android.util.Log
@@ -24,6 +25,8 @@ class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapte
     private var isMultiSelect = false
     private val selectedItems = mutableListOf<String>()
     private var giftList = ArrayList<ItemData>()
+    private val storageRef = FirebaseStorage.getInstance().reference
+    private val databaseRef = Firebase.database.getReference("user_data")
 
     fun toggleMultiSelect() {
         isMultiSelect = !isMultiSelect
@@ -36,9 +39,6 @@ class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapte
     }
 
     private fun deleteSelectedItems() {
-        val storageRef = FirebaseStorage.getInstance().reference
-        val databaseRef = Firebase.database.getReference("ocr_results")
-
         // 선택된 이미지들에 대해 firebase storage와 DB에서 삭제
         selectedItems.forEach { imageUrl ->
             // 파일 경로에서 파일 이름만 추출
@@ -49,7 +49,7 @@ class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapte
             // firebase storage에서 해당 이미지 삭제
             storageRef.child("images/$filename").delete()
 
-            // firebase DB에서 해당 이미지 OCR 결과 삭제
+            // firebase DB에서 해당 데이터 삭제
             databaseRef.orderByChild("image_url").equalTo("/images/$filename").addListenerForSingleValueEvent(object :
                 ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -104,11 +104,13 @@ class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapte
         holder.item.text = gift.item
         holder.date.text = gift.date
 
-        val imageUrl = items[position]
-        Glide.with(holder.imageView.context).load(imageUrl).into(holder.imageView)
+        val imageUrl = gift.image_url
+        Log.v(TAG, "image = " + storageRef.child(imageUrl))
+        Glide.with(holder.imageView.context).load(storageRef.child(imageUrl)).into(holder.imageView)
+
 
         if (isMultiSelect) {
-            val isSelected = selectedItems.contains(gift.imageUrl)
+            val isSelected = selectedItems.contains(gift.image_url)
             holder.itemView.setBackgroundColor(
                 if (isSelected) {
                     ContextCompat.getColor(holder.itemView.context, R.color.selectpink)
@@ -119,9 +121,9 @@ class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapte
 
             holder.itemView.setOnClickListener {
                 if (isSelected) {
-                    selectedItems.remove(gift.imageUrl)
+                    selectedItems.remove(gift.image_url)
                 } else {
-                    selectedItems.add(gift.imageUrl)
+                    selectedItems.add(gift.image_url)
                 }
                 notifyItemChanged(position)
             }

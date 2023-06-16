@@ -79,8 +79,10 @@ class ManageActivity : AppCompatActivity() {
     }
 
     fun observerData(){
-        viewModel.fetchData().observe(this, Observer {
-            adapter.setListData(it)
+        viewModel.fetchData().observe(this, { data ->
+            imageList.clear()
+            imageList.addAll(data)
+            adapter.setListData(data)
             adapter.notifyDataSetChanged()
         })
     }
