@@ -48,9 +48,7 @@ class UploadActivity : AppCompatActivity() {
                 showProgressDialog(this)
                 uploadImageTOFirebase(selectedImageUri!!, store, item, date)
             }
-
         }
-
     }
 
     private fun openGallery() {
@@ -86,7 +84,6 @@ class UploadActivity : AppCompatActivity() {
                 )
                 databaseRef.child(key).setValue(result)
                     .addOnSuccessListener {
-                        Toast.makeText(getApplicationContext(), "성공", Toast.LENGTH_LONG).show()
                         hideProgressDialog()
                         finish()
                     }
@@ -96,7 +93,6 @@ class UploadActivity : AppCompatActivity() {
                         hideProgressDialog()
                         finish()
                     }
-
             }
     }
 

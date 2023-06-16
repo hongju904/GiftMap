@@ -13,13 +13,19 @@ import android.view.MenuItem
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import java.text.SimpleDateFormat
+import androidx.lifecycle.Observer
 import java.util.*
 import com.googlecode.tesseract.android.TessBaseAPI
 import java.io.File
@@ -28,19 +34,18 @@ import java.io.IOException
 
 
 class ManageActivity : AppCompatActivity() {
-    private var uri: Uri? = null
     private lateinit var recyclerView: RecyclerView
-    private lateinit var imageAdapter: ImageAdapter
-    private lateinit var imageList: ArrayList<String>
+    private lateinit var adapter : ImageAdapter
+    private val viewModel by lazy {ViewModelProvider(this).get(ListViewModel::class.java)}
+    private lateinit var imageList: ArrayList<ItemData>
 
     private val storageRef = FirebaseStorage.getInstance().getReference("images")
-//    val database = Firebase.database
+    private val databaseRef = FirebaseDatabase.getInstance().reference.child("user_data")
 
     private var isMultiSelect = false
 
     private lateinit var addbtn: Button
     private lateinit var editbtn: Button
-//    private var progressDialog: ProgressDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,7 +54,7 @@ class ManageActivity : AppCompatActivity() {
         addbtn = findViewById(R.id.button1)
         editbtn = findViewById(R.id.button2)
 
-        // 기프티콘 업로드
+        // 기프티콘 업로드, 삭제
         addbtn.setOnClickListener {
             if (isMultiSelect) {
                 toggleMultiSelect()
@@ -58,7 +63,6 @@ class ManageActivity : AppCompatActivity() {
                 startActivityForResult(intent, REQUEST_CODE)
             }
         }
-
         editbtn.setOnClickListener{
             toggleMultiSelect()
         }
@@ -68,44 +72,19 @@ class ManageActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         imageList = ArrayList()
-        imageAdapter = ImageAdapter(imageList)
-        recyclerView.adapter = imageAdapter
+        adapter = ImageAdapter(imageList)
+        recyclerView.adapter = adapter
 
-        storageRef.listAll().addOnSuccessListener { listResult ->
-            listResult.items.forEach { item ->
-                item.downloadUrl.addOnSuccessListener { uri ->
-                    imageList.add(uri.toString())
-                    imageAdapter.notifyDataSetChanged()
-                }
-            }
-        }.addOnFailureListener {
-            Toast.makeText(this, "Failed to fetch images", Toast.LENGTH_SHORT).show()
-        }
+        observerData()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
-            storageRef.listAll().addOnSuccessListener { listResult ->
-                imageList.clear()
-                listResult.items.forEach { item ->
-                    item.downloadUrl.addOnSuccessListener { uri ->
-                        imageList.add(uri.toString())
-                        imageAdapter.notifyDataSetChanged()
-                    }
-                }
-            }
-        }
-    }
-
-
-    private fun Uri.toFile(context: Context, file: File): File {
-        context.contentResolver.openInputStream(this).use { input ->
-            file.outputStream().use { output ->
-                input?.copyTo(output)
-            }
-        }
-        return file
+    fun observerData(){
+        viewModel.fetchData().observe(this, { data ->
+            imageList.clear()
+            imageList.addAll(data)
+            adapter.setListData(data)
+            adapter.notifyDataSetChanged()
+        })
     }
 
     private fun toggleMultiSelect() {
@@ -117,17 +96,8 @@ class ManageActivity : AppCompatActivity() {
             addbtn.text = "추가"
             editbtn.text = "편집"
         }
-        imageAdapter.toggleMultiSelect()
+        adapter.toggleMultiSelect()
     }
-
-//    fun showProgressDialog(context: Context) {
-//        progressDialog = ProgressDialog.show(context, "", "업로드 중입니다...", true)
-//    }
-//
-//    fun hideProgressDialog() {
-//        progressDialog?.dismiss()
-//        progressDialog = null
-//    }
 
     companion object {
         private const val REQUEST_CODE = 100

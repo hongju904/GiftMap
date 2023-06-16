@@ -37,6 +37,9 @@
         <meta-data
             android:name="com.kakao.sdk.AppKey"
             android:value="d63e2239083c2f96f5350374a0bfcda6" />
+        <meta-data
+            android:name="com.example.MyAppGlideModule"
+            android:value="GlideModule" />
     </application>
 
 </manifest>
