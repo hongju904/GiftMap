@@ -39,9 +39,6 @@ class ManageActivity : AppCompatActivity() {
     private val viewModel by lazy {ViewModelProvider(this).get(ListViewModel::class.java)}
     private lateinit var imageList: ArrayList<ItemData>
 
-    private val storageRef = FirebaseStorage.getInstance().getReference("images")
-    private val databaseRef = FirebaseDatabase.getInstance().reference.child("user_data")
-
     private var isMultiSelect = false
 
     private lateinit var addbtn: Button
