@@ -3,6 +3,7 @@ package com.example.giftmap
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -19,6 +20,8 @@ import android.widget.ListAdapter
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
+import com.google.firebase.storage.StorageReference
+import com.squareup.picasso.Picasso
 
 class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapter<ImageAdapter.ViewHolder>() {
 
@@ -106,7 +109,15 @@ class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapte
 
         val imageUrl = gift.image_url
         Log.v(TAG, "image = " + storageRef.child(imageUrl))
-        Glide.with(holder.imageView.context).load(storageRef.child(imageUrl)).into(holder.imageView)
+        if (!imageUrl.isNullOrEmpty()) {
+            val storageReference: StorageReference = storageRef.child(imageUrl)
+            val uri: Uri = Uri.parse(storageReference.toString())
+            Picasso.get().load(uri).into(holder.imageView)
+        } else {
+            // 이미지 URL이 비어 있거나 null인 경우 처리할 내용 추가
+            // 예: 기본 이미지 설정 또는 에러 처리
+        }
+//        Glide.with(holder.imageView.context).load(storageRef.child(imageUrl)).into(holder.imageView)
 
 
         if (isMultiSelect) {
