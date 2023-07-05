@@ -14,36 +14,44 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.vision.Frame
+import com.google.android.gms.vision.text.TextRecognizer
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.ml.vision.FirebaseVision
+import com.google.firebase.ml.vision.common.FirebaseVisionImage
+import com.google.firebase.ml.vision.text.FirebaseVisionCloudTextRecognizerOptions
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
 
 class UploadActivity : AppCompatActivity() {
+    private val CLOUD_VISION_API_KEY = "292aa42d54eaef3434f99730c64a47bc5cc2daf8"
+
     private var selectedImageUri: Uri? = null
     val uid = FirebaseAuth.getInstance().currentUser?.uid
     val databaseRef = FirebaseDatabase.getInstance().getReference("user_data/$uid")
     private var progressDialog: ProgressDialog? = null
     private lateinit var bitmap: Bitmap
 
+    private lateinit var itemEditText: EditText
+    private lateinit var storeEditText: EditText
+    private lateinit var dateEditText: EditText
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_upload)
         openGallery()
 
+        storeEditText = findViewById(R.id.store2)
+        itemEditText = findViewById(R.id.item2)
+        dateEditText = findViewById(R.id.date2)
+
         val doneButton: Button = findViewById(R.id.done)
         doneButton.setOnClickListener {
-            val storeEditText: EditText = findViewById(R.id.store2)
             val store: String = storeEditText.text.toString()
-
-            val itemEditText: EditText = findViewById(R.id.item2)
             val item: String = itemEditText.text.toString()
-
-            val dateEditText: EditText = findViewById(R.id.date2)
             val date: String = dateEditText.text.toString()
 
             if (selectedImageUri != null) {
@@ -67,6 +75,7 @@ class UploadActivity : AppCompatActivity() {
             giftimg.setImageURI(selectedImageUri)
 
             bitmap = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), selectedImageUri)
+            performOCR(bitmap)
         }
     }
 
@@ -98,6 +107,39 @@ class UploadActivity : AppCompatActivity() {
             }
     }
 
+    fun performOCR(bitmap: Bitmap) {
+        val image = FirebaseVisionImage.fromBitmap(bitmap)
+
+        val options = FirebaseVisionCloudTextRecognizerOptions.Builder()
+            .setLanguageHints(Arrays.asList("ko", "en"))
+            .build()
+
+        val textRecognizer = FirebaseVision.getInstance().getCloudTextRecognizer(options)
+
+        textRecognizer.processImage(image)
+            .addOnSuccessListener { firebaseVisionText ->
+                val resultText = firebaseVisionText.text
+                Log.d("OCR", "OCR: ${resultText}")
+
+                val dateRegex = Regex("""\d{4}\.\d{2}\.\d{2}""")
+                val dateMatch = dateRegex.find(resultText)
+                val dateString = dateMatch?.value ?: ""
+                dateEditText.setText(dateString)
+
+                val lines = resultText.split("\n")
+                val firstLine = lines.getOrNull(0) ?: ""
+                val secondLine = lines.getOrNull(1) ?: ""
+
+                storeEditText.setText(firstLine)
+                itemEditText.setText(secondLine)
+
+            }
+            .addOnFailureListener { exception ->
+                // OCR 처리 중 오류가 발생한 경우의 처리 코드를 여기에 작성합니다.
+            }
+
+
+    }
 
 
     fun byteArrayToBinaryString(b: ByteArray): String? {

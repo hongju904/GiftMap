@@ -32,7 +32,6 @@ class MapActivity : AppCompatActivity() {
     val uid = FirebaseAuth.getInstance().currentUser?.uid
     var databaseRef = FirebaseDatabase.getInstance().getReference("user_data/$uid")
     private val storeSet = HashSet<String>()
-
     companion object {
         const val BASE_URL = "https://dapi.kakao.com/"
         const val API_KEY = "KakaoAK 5d08621c2d5119da4b81a9661dac4f92" // REST API 키
@@ -54,7 +53,6 @@ class MapActivity : AppCompatActivity() {
 
         mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading)
         mapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.flags2, MapPOIItem.ImageOffset(30, 30))
-        fetchDataFromDatabaseAndSearchKeyword()
 
         val myLocation: FloatingActionButton = findViewById(R.id.locationbtn)
         myLocation.setOnClickListener {
@@ -80,6 +78,7 @@ class MapActivity : AppCompatActivity() {
             } catch (e: SecurityException) {
                 e.printStackTrace()
             }
+            fetchDataFromDatabaseAndSearchKeyword()
 
         }
 
@@ -110,8 +109,6 @@ class MapActivity : AppCompatActivity() {
 
                 if (places != null) {
                     for (place in places) {
-//                        val place = places[0]
-//                        Log.d("Test", "Body: ${place}")
                         val marker = MapPOIItem()
                         marker.itemName = place.place_name
                         marker.mapPoint =

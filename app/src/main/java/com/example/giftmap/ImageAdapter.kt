@@ -130,33 +130,34 @@ class ImageAdapter(private val items: ArrayList<ItemData>) : RecyclerView.Adapte
         } else {
             holder.itemView.setBackgroundColor(Color.TRANSPARENT)
             holder.itemView.setOnClickListener(null)
-        }
 
-        // 클릭 시 수정
-        holder.itemView.setOnClickListener {
-            val selectedItem = giftList[position]
-            var keyId: String? = null
+            holder.itemView.setOnClickListener {
+                val selectedItem = giftList[position]
+                var keyId: String? = null
 
-            databaseRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    for (userSnapshot in dataSnapshot.children) {   // userSnapshot: 아이템 리스트
+                databaseRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        for (userSnapshot in dataSnapshot.children) {   // userSnapshot: 아이템 리스트
                             val item = userSnapshot.getValue(ItemData::class.java)
                             if (item?.filename == selectedItem.filename) {
                                 keyId = userSnapshot.key
+                            }
                         }
+                        val intent = Intent(holder.itemView.context, EditItemActivity::class.java)
+                        intent.putExtra("keyId", keyId)
+                        intent.putExtra("storeId", selectedItem.store)
+                        intent.putExtra("itemId", selectedItem.item)
+                        intent.putExtra("dateId", selectedItem.date)
+                        holder.itemView.context.startActivity(intent)
                     }
-                    val intent = Intent(holder.itemView.context, EditItemActivity::class.java)
-                    intent.putExtra("keyId", keyId)
-                    intent.putExtra("storeId", selectedItem.store)
-                    intent.putExtra("itemId", selectedItem.item)
-                    intent.putExtra("dateId", selectedItem.date)
-                    holder.itemView.context.startActivity(intent)
-                }
-                override fun onCancelled(databaseError: DatabaseError) {
-                    // 오류 처리
-                }
-            })
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        // 오류 처리
+                    }
+                })
+            }
         }
+
+
     }
 
     fun binaryStringToByteArray(s: String): ByteArray? {
