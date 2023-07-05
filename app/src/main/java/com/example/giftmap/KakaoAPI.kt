@@ -9,7 +9,9 @@ interface KakaoAPI {
     @GET("v2/local/search/keyword.json")
     fun getSearchKeyword(
         @Header("Authorization") key: String, // 카카오 API 인증키
-        @Query("query") query: String // 검색을 원하는 질의어
+        @Query("query") query: String, // 검색을 원하는 질의어
+        @Query("y") latitude: Double, // 위도
+        @Query("x") longitude: Double // 경도
 
     ): Call<ResultSearchKeyword>
 }

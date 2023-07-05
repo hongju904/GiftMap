@@ -10,8 +10,10 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
@@ -23,10 +25,12 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Query
 
 class MapActivity : AppCompatActivity() {
     private lateinit var mapView: MapView
-    private val databaseRef = Firebase.database.getReference("user_data")
+    val uid = FirebaseAuth.getInstance().currentUser?.uid
+    var databaseRef = FirebaseDatabase.getInstance().getReference("user_data/$uid")
     private val storeSet = HashSet<String>()
 
     companion object {
@@ -48,8 +52,8 @@ class MapActivity : AppCompatActivity() {
         val mapViewContainer = findViewById<ViewGroup>(R.id.map_view)
         mapViewContainer.addView(mapView)
 
-        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOff)
-//        mapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.flags2, MapPOIItem.ImageOffset(30, 30))
+        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading)
+        mapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.flags2, MapPOIItem.ImageOffset(30, 30))
         fetchDataFromDatabaseAndSearchKeyword()
 
         val myLocation: FloatingActionButton = findViewById(R.id.locationbtn)
@@ -77,23 +81,22 @@ class MapActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
 
-            for (store in storeSet) {
-                searchKeyword(store)
-            }
         }
+
 
         val intent = Intent(this, ManageActivity::class.java)
         val menubtn: FloatingActionButton = findViewById(R.id.menubtn)
         menubtn.setOnClickListener { startActivity(intent) }
     }
 
-    private fun searchKeyword(keyword: String) {
+    private fun searchKeyword(keyword: String, latitude: Double, longitude: Double) {
         val retrofit = Retrofit.Builder() // Retrofit 구성
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val api = retrofit.create(KakaoAPI::class.java)
-        val call = api.getSearchKeyword(API_KEY, keyword)
+
+        val call = api.getSearchKeyword(API_KEY, keyword, latitude, longitude)
 
         // API 서버에 요청
         call.enqueue(object : Callback<ResultSearchKeyword> {
@@ -102,11 +105,11 @@ class MapActivity : AppCompatActivity() {
                 response: Response<ResultSearchKeyword>
             ) {
                 // 통신 성공. 검색 결과는 response.body()에 담김
-//                Log.d("Test", "Body: ${response.body()}")
+                Log.d("Test", "Body: ${response.body()}")
                 val places = response.body()?.documents
 
                 if (places != null) {
-                    for (place in places.slice(0..5)) {
+                    for (place in places) {
 //                        val place = places[0]
 //                        Log.d("Test", "Body: ${place}")
                         val marker = MapPOIItem()
@@ -115,6 +118,7 @@ class MapActivity : AppCompatActivity() {
                             MapPoint.mapPointWithGeoCoord(place.y.toDouble(), place.x.toDouble())
                         marker.markerType = MapPOIItem.MarkerType.BluePin
                         marker.setShowDisclosureButtonOnCalloutBalloon(false)
+                        mapView.addPOIItem(marker)
                     }
                 }
             }
@@ -125,15 +129,19 @@ class MapActivity : AppCompatActivity() {
             }
         })
 
+
     }
 
     private fun moveMapToCurrentLocation(latitude: Double, longitude: Double) {
         val mapPoint = MapPoint.mapPointWithGeoCoord(latitude, longitude)
         mapView.setMapCenterPoint(mapPoint, true) // 애니메이션 효과를 포함하여 지도 이동
-        Toast.makeText(this.getApplicationContext(),"눌렀음", Toast.LENGTH_SHORT);
+        for (store in storeSet) {
+            searchKeyword(store, latitude, longitude)
+        }
     }
 
     private fun fetchDataFromDatabaseAndSearchKeyword() {
+        databaseRef = FirebaseDatabase.getInstance().getReference("user_data/$uid")
         databaseRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 for (childSnapshot in dataSnapshot.children) {

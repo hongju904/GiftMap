@@ -2,8 +2,10 @@ package com.example.giftmap
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
@@ -11,8 +13,9 @@ import com.google.firebase.ktx.Firebase
 class Repo {
     fun getData(): LiveData<MutableList<ItemData>> {
         val mutableData = MutableLiveData<MutableList<ItemData>>()
-        val database = Firebase.database
-        val myRef = database.getReference("user_data")
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val myRef = FirebaseDatabase.getInstance().getReference("user_data/$uid")
+//        val myRef = database.getReference("user_data")
         myRef.addValueEventListener(object : ValueEventListener {
             val listData: MutableList<ItemData> = mutableListOf<ItemData>()
             override fun onDataChange(snapshot: DataSnapshot) {

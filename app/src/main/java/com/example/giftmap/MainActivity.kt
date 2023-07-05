@@ -13,8 +13,6 @@ import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-
-
 class MainActivity : AppCompatActivity() {
 
     lateinit var auth: FirebaseAuth
@@ -60,7 +58,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     else if(result.exception?.message.isNullOrEmpty()){
-                        Toast.makeText(this, "회원가입 실패", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "회원가입 실패", Toast.LENGTH_SHORT).show()
                     }
                 }
         }
@@ -76,6 +74,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateUI(currentUser: FirebaseUser?) {
         if (currentUser != null) {
             val intent: Intent = Intent(this, MapActivity::class.java)
+            intent.putExtra("uid", currentUser)
             startActivity(intent)
             finish()
         }

@@ -5,28 +5,30 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
-import com.google.firebase.database.DatabaseReference
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.FirebaseStorage
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.*
+
 
 class UploadActivity : AppCompatActivity() {
     private var selectedImageUri: Uri? = null
-    val database = FirebaseDatabase.getInstance()
-
-    val databaseRef = database.getReference("user_data")
+    val uid = FirebaseAuth.getInstance().currentUser?.uid
+    val databaseRef = FirebaseDatabase.getInstance().getReference("user_data/$uid")
     private var progressDialog: ProgressDialog? = null
+    private lateinit var bitmap: Bitmap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,51 +62,68 @@ class UploadActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK && data != null) {
-            selectedImageUri = data.data
+            selectedImageUri = data?.data
             val giftimg: ImageView = findViewById(R.id.giftimg)
             giftimg.setImageURI(selectedImageUri)
+
+            bitmap = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), selectedImageUri)
         }
     }
 
     private fun uploadImageTOFirebase(uri: Uri, store: String?, item: String?, date: String?) {
-        val storage: FirebaseStorage = FirebaseStorage.getInstance()
-        val fileName = "IMAGE_${SimpleDateFormat("yyyymmdd_HHmmss").format(Date())}_.png"
+        val fileName = "${SimpleDateFormat("yyyymmdd_HHmmss").format(Date())}"
 
-        val imagesRef = storage.reference.child("images/").child(fileName)
-        imagesRef.putFile(uri)
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+        val reviewImage = stream.toByteArray()
+        val simage = byteArrayToBinaryString(reviewImage)
+
+        val key = databaseRef.push().key ?: ""
+        val result = hashMapOf(
+            "store" to store,
+            "item" to item,
+            "date" to date,
+            "simage" to simage,
+            "filename" to fileName
+        )
+        databaseRef.child(key).setValue(result)
             .addOnSuccessListener {
-
-                // firebase DB에 정보 업로드
-                val key = databaseRef.push().key ?: ""
-                val result = hashMapOf(
-                    "image_url" to imagesRef.path,
-                    "store" to store,
-                    "item" to item,
-                    "date" to date
-                )
-                databaseRef.child(key).setValue(result)
-                    .addOnSuccessListener {
-                        hideProgressDialog()
-                        finish()
-                    }
-                    .addOnFailureListener {
-                        // 데이터 전송 실패 시 처리할 내용
-                        Toast.makeText(getApplicationContext(), "실패", Toast.LENGTH_LONG).show()
-                        hideProgressDialog()
-                        finish()
-                    }
+                hideProgressDialog()
+                finish()
             }
+            .addOnFailureListener {
+                Toast.makeText(getApplicationContext(), "실패", Toast.LENGTH_LONG).show()
+                hideProgressDialog()
+                finish()
+            }
+    }
+
+
+
+    fun byteArrayToBinaryString(b: ByteArray): String? {
+        val sb = StringBuilder()
+        for (i in b.indices) {
+            sb.append(byteToBinaryString(b[i]))
+        }
+        return sb.toString()
+    }
+    fun byteToBinaryString(n: Byte): String? {
+        val sb = java.lang.StringBuilder("00000000")
+        for (bit in 0..7) {
+            if (n.toInt() shr bit and 1 > 0) {
+                sb.setCharAt(7 - bit, '1')
+            }
+        }
+        return sb.toString()
     }
 
     fun showProgressDialog(context: Context) {
         progressDialog = ProgressDialog.show(context, "", "업로드 중입니다...", true)
     }
-
     fun hideProgressDialog() {
         progressDialog?.dismiss()
         progressDialog = null
     }
-
     companion object {
         private const val REQUEST_CODE = 100
     }
