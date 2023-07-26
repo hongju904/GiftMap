@@ -42,5 +42,7 @@
 
 ---
 
-## 🎁 App 이미지
-![image](https://github.com/hongju904/GiftMap/assets/74871378/fbdab12a-6d7c-46a0-a45d-5f436bb1f9f2)
+## 🎁 App 요약
+![image](https://github.com/hongju904/GiftMap/assets/74871378/aaed4de8-3243-492b-af11-c8edf9a938cb)
+
+
