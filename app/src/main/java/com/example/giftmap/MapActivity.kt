@@ -51,7 +51,9 @@ class MapActivity : AppCompatActivity() {
         val mapViewContainer = findViewById<ViewGroup>(R.id.map_view)
         mapViewContainer.addView(mapView)
 
-        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading)
+        mapView.setCurrentLocationTrackingMode(
+            MapView.CurrentLocationTrackingMode.
+            TrackingModeOnWithoutHeading)
         mapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.flags2, MapPOIItem.ImageOffset(30, 30))
 
         val myLocation: FloatingActionButton = findViewById(R.id.locationbtn)

@@ -14,8 +14,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.vision.Frame
-import com.google.android.gms.vision.text.TextRecognizer
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.ml.vision.FirebaseVision
@@ -121,7 +119,7 @@ class UploadActivity : AppCompatActivity() {
                 val resultText = firebaseVisionText.text
                 Log.d("OCR", "OCR: ${resultText}")
 
-                val dateRegex = Regex("""\d{4}\.\d{2}\.\d{2}""")
+                val dateRegex = Regex("""\d{4}\.\d{2}\.\d{2}|\d{4}년 \d{2}월 \d{2}일""")
                 val dateMatch = dateRegex.find(resultText)
                 val dateString = dateMatch?.value ?: ""
                 dateEditText.setText(dateString)
